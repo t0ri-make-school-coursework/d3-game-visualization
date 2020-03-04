@@ -67,48 +67,55 @@ function handleData(data) {
 
 
 function createVisualization(games) {
-  // Set height and width for data visualization
+  // Set height, width, and margin for data visualization
   const margin = 60
   const width = 3500 - 2 * margin
   const height = 925 - 2 * margin
 
+  // Select `svg` from DOM
   const svg = d3.select('svg')
 
-  svg.append('text')
-    .attr('x', -(height / 2) - margin)
-    .attr('y', margin / 2.4)
-    .attr('transform', 'rotate(-90)')
-    .attr('text-anchor', 'middle')
-    .text('MetaCritic Score')
-
+  // Add "Popular Game Releases in 2018" title to graph
   svg.append('text')
     .attr('x', width / 4 + margin)
     .attr('y', 40)
     .attr('text-anchor', 'middle')
     .text('Popular Game Releases in 2018')
 
+  // Add "MetaCritic Score" label to Y axis
+  svg.append('text')
+    .attr('x', -(height / 2) - margin)
+    .attr('y', margin / 2)
+    .attr('transform', 'rotate(-90)')
+    .attr('text-anchor', 'middle')
+    .text('MetaCritic Score')
+
+  // Add "Games" label to X axis
   svg.append('text')
     .attr('class', 'label')
     .attr('x', width / 4 + margin)
-    .attr('y', height + margin * 1.7)
+    .attr('y', height + margin * 1.5)
     .attr('text-anchor', 'middle')
     .text('Games')
-  
-  const chart = svg.append('g')
-    .attr('transform', `translate(${margin}, ${margin})`)
 
+  // Set score scale on Y axis
   const yScale = d3.scaleLinear()
     .range([height, 0])
     .domain([50, 100])
 
+  // Set game title labels on X axis
   const xScale = d3.scaleBand()
     .range([0, width])
     .domain(games.map((game) => game.name))
 
-  const color = d3.scaleOrdinal(games.map(game => game.platform), d3.schemeSet2)
+  // Create color method to assign colors to bars
+  const color = d3.scaleOrdinal(games.map(game => Number(game.platform.charCodeAt(0))), d3.schemeSet3)
 
-  chart.append('g').call(d3.axisLeft(yScale))
-
+  // Create `chart` group in `svg`
+  const chart = svg.append('g')
+    .attr('transform', `translate(${margin}, ${margin})`)
+  
+  // Draw X axis grid
   chart.append('g')
     .attr('class', 'grid')
     .attr('transform', `translate(0, ${height})`)
@@ -117,6 +124,7 @@ function createVisualization(games) {
       .tickSize(-height, 0, 0)
       .tickFormat(''))
 
+  // Draw Y axis grid
   chart.append('g')
     .attr('class', 'grid')
     .call(d3.axisLeft()
@@ -124,17 +132,22 @@ function createVisualization(games) {
       .tickSize(-width, 0, 0)
       .tickFormat(''))
 
+  // Create group to hold Y axis scale
+  chart.append('g').call(d3.axisLeft(yScale))
+
+  // Create group to hold X axis labels
   chart.append('g')
     .attr('transform', `translate(0, ${height})`)
     .call(d3.axisBottom(xScale))
 
+  // Create bar for each game
   chart.selectAll()
     .data(games)
     .enter()
     .append('rect')
-    .style('stroke', (game) => d3.rgb(color(game.score)).darker(1))
+    .style('stroke', (game) => d3.rgb(color(game.platform)).darker(1))
     .style('stroke-width', 3)
-    .style('fill', (game) => color(game.score))
+    .style('fill', (game) => color(game.platform))
     .attr('x', (game) => xScale(game.name) + (xScale.bandwidth() / 4))
     .attr('y', (game) => yScale(game.score))
     .attr('height', (game) => height - yScale(game.score))
